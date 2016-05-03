@@ -18,7 +18,7 @@
 <script>
 document.getElementById('star-button').addEventListener('click', function(){
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'http://localhost:3000/star/{{id}}');
+  xhr.open('POST', '/star/{{id}}');
   xhr.addEventListener('load', function(){
     var result = JSON.parse(xhr.responseText).result;
     if (result.ok) {
@@ -27,6 +27,11 @@ document.getElementById('star-button').addEventListener('click', function(){
     }
   });
   xhr.send(null)
+});
+
+document.addEventListener('keyup', function(evt){
+  if(evt.keyCode == 0x0D)
+    document.getElementById('star-button').click();
 });
 </script>
 </body>

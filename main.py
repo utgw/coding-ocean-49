@@ -134,5 +134,5 @@ if __name__ == '__main__':
         os.mkdir('image')
     if not os.path.isdir('./image/thumbnail'):
         os.mkdir('image/thumbnail')
-    app.run(host='0.0.0.0', port=3000)
+    app.run(host='0.0.0.0', port=8901)
 
