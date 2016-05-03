@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='pyazo.css') }}">
+<meta charset="utf-8">
+<title>Pyazo</title>
+</head>
+<body>
+<h1>Pyazo</h1>
+<hr>
+<div id="image-show">
+<img src="{{ url_for('show_image', id=id) }}">
+</div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='pyazo.css') }}">
+<meta charset="utf-8">
+<title>Pyazo</title>
+</head>
+<body>
+<h1>Pyazo</h1>
+<hr>
+<div id="image-list">
+{% for image in images %}
+<div class="image">
+<a href="{{ url_for('show_image_page', id=image.id) }}">
+<img src="{{ url_for('show_image', id=image.id, mode="thumbnail") }}">
+</a>
+</div>
+{% endfor %}
+</div>
+<hr>
+<form action="/upload" method="POST" enctype="multipart/form-data">
+<input name="file" type="file">
+<input type="submit" value="Upload">
+</form>
+</body>
+</html>
