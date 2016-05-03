@@ -18,7 +18,7 @@ def index():
     session = Session()
     sort_by = request.args.get('sort_by', 'date')
     if sort_by == 'date':
-        images = session.query(models.Image).order_by(models.Image.created_at)
+        images = session.query(models.Image).order_by(models.Image.created_at.desc())
     elif sort_by == 'star':
         images = session.query(models.Image).order_by(models.Image.star.desc())
     return render_template('index.html', images=images)
