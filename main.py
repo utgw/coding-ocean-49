@@ -9,6 +9,7 @@ app = Flask(__name__)
 app.debug = True
 Session = sessionmaker(bind=models.engine)
 image_dir = 'image/'
+available_mimetypes = ['image/gif', 'image/png', 'image/jpeg']
 
 
 @app.route('/')
@@ -24,6 +25,8 @@ def upload():
     new_id = session.query(models.Image).count() + 1
     image_path = '{}{}.png'.format(image_dir, new_id)
     f = request.files['file']
+    if f.mimetype not in available_mimetypes:
+        return redirect(url_for('index'))
     image = models.Image(id=new_id, created_at=datetime.now())
     f.save(image_path)
     img = Image.open(image_path)
