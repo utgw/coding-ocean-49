@@ -5,6 +5,7 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
 from sqlalchemy.orm import sessionmaker
 from PIL import Image
+import requests
 import models
 app = Flask(__name__)
 app.debug = True
@@ -22,21 +23,44 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    session = Session()
-    new_id = session.query(models.Image).order_by(models.Image.created_at.desc()).first().id + 1
-    image_path = '{}{}.png'.format(image_dir, new_id)
     f = request.files['file']
-    if f.mimetype not in available_mimetypes:
+    result = __upload__(f)
+    if result['ok']:
+        return redirect(url_for('image_controller', id=result['id']))
+    else:
         return redirect(url_for('index'))
-    image = models.Image(id=new_id, created_at=datetime.now())
-    f.save(image_path)
-    img = Image.open(image_path)
-    thumbnail_path = '{}thumbnail/{}.png'.format(image_dir, new_id)
-    img.thumbnail((128, 128))
-    img.save(thumbnail_path)
-    session.add(image)
-    session.commit()
-    return redirect(url_for('image_controller', id=new_id))
+
+
+@app.route('/upload.json', methods=['POST'])
+def upload_json():
+    f = request.files['file']
+    return jsonify(result=__upload__(f))
+
+
+def __upload__(f):
+    if f.mimetype not in available_mimetypes:
+        result = {
+            'ok': False,
+            'error': 'Invalid file type'
+        }
+    else:
+        session = Session()
+        new_id = session.query(models.Image).order_by(models.Image.created_at.desc()).first().id + 1
+        image_path = '{}{}.png'.format(image_dir, new_id)
+        image = models.Image(id=new_id, created_at=datetime.now())
+        f.save(image_path)
+        img = Image.open(image_path)
+        thumbnail_path = '{}thumbnail/{}.png'.format(image_dir, new_id)
+        img.thumbnail((128, 128))
+        img.save(thumbnail_path)
+        session.add(image)
+        session.commit()
+        result = {
+            'ok': True,
+            'id': new_id,
+            'created_at': image.created_at
+        }
+    return result
 
 
 @app.route('/{}<id>.png'.format(image_dir))
