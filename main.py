@@ -15,14 +15,14 @@ available_mimetypes = ['image/gif', 'image/png', 'image/jpeg']
 @app.route('/')
 def index():
     session = Session()
-    images = session.query(models.Image)
+    images = session.query(models.Image).order_by(models.Image.created_at)
     return render_template('index.html', images=images)
 
 
 @app.route('/upload', methods=['POST'])
 def upload():
     session = Session()
-    new_id = session.query(models.Image).count() + 1
+    new_id = session.query(models.Image).order_by(models.Image.created_at.desc()).first().id + 1
     image_path = '{}{}.png'.format(image_dir, new_id)
     f = request.files['file']
     if f.mimetype not in available_mimetypes:
