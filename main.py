@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
+import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, send_file
+from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
 from sqlalchemy.orm import sessionmaker
 from PIL import Image
 import models
@@ -48,9 +49,23 @@ def show_image(id):
     return send_file(image_path)
 
 
-@app.route('/{}<id>'.format(image_dir))
+@app.route('/{}<id>'.format(image_dir), methods=['GET', 'DELETE'])
 def image_controller(id):
-    return render_template('show_image.html', id=id)
+    if request.method == 'GET':
+        return render_template('show_image.html', id=id)
+    elif request.method == 'DELETE':
+        session = Session()
+        image = session.query(models.Image).filter(models.Image.id == id).one()
+        session.delete(image)
+        session.commit()
+        image_path = '{}{}.png'.format(image_dir, id)
+        thumbnail_path = '{}thumbnail/{}.png'.format(image_dir, id)
+        os.remove(image_path)
+        os.remove(thumbnail_path)
+        result = {
+            'ok': True
+        }
+        return jsonify(result=result)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3000)
