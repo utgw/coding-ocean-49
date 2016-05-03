@@ -5,7 +5,6 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
 from sqlalchemy.orm import sessionmaker
 from PIL import Image
-import requests
 import models
 app = Flask(__name__)
 app.debug = True
@@ -17,14 +16,18 @@ available_mimetypes = ['image/gif', 'image/png', 'image/jpeg']
 @app.route('/')
 def index():
     session = Session()
-    images = session.query(models.Image).order_by(models.Image.created_at)
+    sort_by = request.args.get('sort_by', 'date')
+    if sort_by == 'date':
+        images = session.query(models.Image).order_by(models.Image.created_at)
+    elif sort_by == 'star':
+        images = session.query(models.Image).order_by(models.Image.star.desc())
     return render_template('index.html', images=images)
 
 
 @app.route('/upload', methods=['POST'])
 def upload():
     f = request.files['file']
-    result, _ = __upload__(f)
+    result, poe = __upload__(f)
     if result['ok']:
         return redirect(url_for('image_controller', id=result['id']))
     else:
@@ -48,9 +51,12 @@ def __upload__(f):
     else:
         try:
             session = Session()
-            new_id = session.query(models.Image).order_by(models.Image.created_at.desc()).first().id + 1
+            try:
+                new_id = session.query(models.Image).order_by(models.Image.created_at.desc()).first().id + 1
+            except:
+                new_id = 1
             image_path = '{}{}.png'.format(image_dir, new_id)
-            image = models.Image(id=new_id, created_at=datetime.now())
+            image = models.Image(id=new_id, created_at=datetime.now(), star=0)
             f.save(image_path)
             img = Image.open(image_path)
             thumbnail_path = '{}thumbnail/{}.png'.format(image_dir, new_id)
@@ -64,7 +70,7 @@ def __upload__(f):
                 'created_at': image.created_at
             }
             status_code = 201
-        except:
+        except Exception as e:
             result = {
                 'ok': False
             }
@@ -85,7 +91,9 @@ def show_image(id):
 @app.route('/{}<id>'.format(image_dir), methods=['GET', 'DELETE'])
 def image_controller(id):
     if request.method == 'GET':
-        return render_template('show_image.html', id=id)
+        session = Session()
+        image = session.query(models.Image).filter(models.Image.id == id).one()
+        return render_template('show_image.html', id=id, image=image)
     elif request.method == 'DELETE':
         session = Session()
         image = session.query(models.Image).filter(models.Image.id == id).one()
@@ -99,6 +107,27 @@ def image_controller(id):
             'ok': True
         }
         return jsonify(result=result)
+
+
+@app.route('/star/<id>', methods=['POST'])
+def star_image(id):
+    try:
+        session = Session()
+        image = session.query(models.Image).filter(models.Image.id == id).one()
+        image.star += 1
+        session.commit()
+        result = {
+            'ok': True,
+            'star': image.star
+        }
+        status_code = 200
+    except Exception as e:
+        result = {
+            'ok': False
+        }
+        status_code = 500
+    return jsonify(result=result), status_code
+
 
 if __name__ == '__main__':
     if not os.path.isdir('./image'):

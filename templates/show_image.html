@@ -11,5 +11,23 @@
 <div id="image-show">
 <img src="{{ url_for('show_image', id=id) }}">
 </div>
+<p><button type="button" id="star-button">☆</button>x<span id="star-count">{{image.star}}</span></p>
+<div id="star">
+{{ '★'*image.star }}
+</div>
+<script>
+document.getElementById('star-button').addEventListener('click', function(){
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'http://localhost:3000/star/{{id}}');
+  xhr.addEventListener('load', function(){
+    var result = JSON.parse(xhr.responseText).result;
+    if (result.ok) {
+      document.getElementById('star').innerText += '★';
+      document.getElementById('star-count').innerText = Number(document.getElementById('star-count').innerText)+1;
+    }
+  });
+  xhr.send(null)
+});
+</script>
 </body>
 </html>
