@@ -35,7 +35,7 @@ def upload():
     img.save(thumbnail_path)
     session.add(image)
     session.commit()
-    return redirect(url_for('show_image_page', id=new_id))
+    return redirect(url_for('image_controller', id=new_id))
 
 
 @app.route('/{}<id>.png'.format(image_dir))
@@ -49,9 +49,7 @@ def show_image(id):
 
 
 @app.route('/{}<id>'.format(image_dir))
-def show_image_page(id):
-    session = Session()
-    images = session.query(models.Image).filter(models.Image.id == id).one()
+def image_controller(id):
     return render_template('show_image.html', id=id)
 
 if __name__ == '__main__':
