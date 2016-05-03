@@ -24,7 +24,7 @@ def index():
 @app.route('/upload', methods=['POST'])
 def upload():
     f = request.files['file']
-    result = __upload__(f)
+    result, _ = __upload__(f)
     if result['ok']:
         return redirect(url_for('image_controller', id=result['id']))
     else:
@@ -34,7 +34,8 @@ def upload():
 @app.route('/upload.json', methods=['POST'])
 def upload_json():
     f = request.files['file']
-    return jsonify(result=__upload__(f))
+    result, status_code = __upload__(f)
+    return jsonify(result=result), status_code
 
 
 def __upload__(f):
@@ -43,24 +44,32 @@ def __upload__(f):
             'ok': False,
             'error': 'Invalid file type'
         }
+        status_code = 400
     else:
-        session = Session()
-        new_id = session.query(models.Image).order_by(models.Image.created_at.desc()).first().id + 1
-        image_path = '{}{}.png'.format(image_dir, new_id)
-        image = models.Image(id=new_id, created_at=datetime.now())
-        f.save(image_path)
-        img = Image.open(image_path)
-        thumbnail_path = '{}thumbnail/{}.png'.format(image_dir, new_id)
-        img.thumbnail((128, 128))
-        img.save(thumbnail_path)
-        session.add(image)
-        session.commit()
-        result = {
-            'ok': True,
-            'id': new_id,
-            'created_at': image.created_at
-        }
-    return result
+        try:
+            session = Session()
+            new_id = session.query(models.Image).order_by(models.Image.created_at.desc()).first().id + 1
+            image_path = '{}{}.png'.format(image_dir, new_id)
+            image = models.Image(id=new_id, created_at=datetime.now())
+            f.save(image_path)
+            img = Image.open(image_path)
+            thumbnail_path = '{}thumbnail/{}.png'.format(image_dir, new_id)
+            img.thumbnail((128, 128))
+            img.save(thumbnail_path)
+            session.add(image)
+            session.commit()
+            result = {
+                'ok': True,
+                'id': new_id,
+                'created_at': image.created_at
+            }
+            status_code = 201
+        except:
+            result = {
+                'ok': False
+            }
+            status_code = 500
+    return result, status_code
 
 
 @app.route('/{}<id>.png'.format(image_dir))
